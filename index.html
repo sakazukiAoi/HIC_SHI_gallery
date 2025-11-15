@@ -70,12 +70,27 @@ h2 { border-bottom: 2px solid #ccc; padding-bottom: 5px; margin-top: 0; }
     background-color: #5a6268;
 }
 
+#sortButtons button span + * {
+    display: none; 
+}
+
+
 /* --- ギャラリーレイアウト --- */
 .gallery-grid {
 display: grid;
+/* デフォルト: PC/タブレットなどで3列以上 */
 grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
 gap: 0;
 }
+
+/* ★メディアクエリ: スマートフォンサイズ (600px以下) では2列にする */
+@media (max-width: 600px) {
+    .gallery-grid {
+        /* 画面幅の約半分のサイズで2列に固定 */
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
 .work-card {
 border: 1px solid #ddd;
 padding: 0;
@@ -86,13 +101,41 @@ width: 100%;
 }
 
 /* --- サムネイル表示とオーバーレイ --- */
-.thumbnail-container { width: 100%; position: relative; overflow: hidden; margin-bottom: 0; display: block; }
-.thumbnail-image { position: relative; width: 100%; height: auto; display: block; background-size: cover; background-position: center center; background-repeat: no-repeat; min-height: 180px; }
+.thumbnail-container { 
+    width: 100%; 
+    position: relative; 
+    overflow: hidden; 
+    margin-bottom: 0; 
+    display: block; 
+    /* min-height: 180px;  ← 削除 */
+}
+
+/* ★正方形(スクエア)を維持するための修正 */
+.thumbnail-image { 
+    position: absolute; /* 親(thumbnail-container)の100%の高さと幅を占有 */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%; 
+    display: block; 
+    background-size: cover; 
+    background-position: center center;
+    background-repeat: no-repeat;
+    /* min-height: 180px; ← 削除 */
+}
+
+/* ★正方形を維持するトリック (アスペクト比 1:1) */
+.thumbnail-container::after {
+    content: "";
+    display: block;
+    padding-top: 100%; /* 幅に対する高さを100%に設定 */
+}
+
 .link-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: space-between; align-items: center; padding: 0 0px; background-color: rgba(0, 0, 0, 0.4); opacity: 0; transition: opacity 0.3s ease; z-index: 10; pointer-events: none; }
 .work-card:hover .link-overlay { opacity: 1; pointer-events: auto; }
 .overlay-button_p, .overlay-button_x { background: rgba(255, 255, 255, 0.9); border: none; border-radius: 50%; width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; cursor: pointer; text-decoration: none; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); }
-.overlay-button_p { margin-left: 25px; }
-.overlay-button_x { margin-right: 30px; }
+.overlay-button_p { margin-left: 15px; }
+.overlay-button_x { margin-right: 15px; }
 .overlay-button_p img, .overlay-button_x img { width: 24px; height: 24px; }
 
 /* --- 通知スタイル --- */
@@ -110,10 +153,10 @@ width: 100%;
 <div class="gallery-section">
 
 <div id="galleryHeader">
- <h2>🖼️ ギャラリー</h2>
+ <h2>🖼️絵画</h2>
  <div id="sortButtons">
   <button onclick="sortGallery('date')">
-           <span class="material-symbols-outlined">calendar_month</span>
+   <span class="material-symbols-outlined">calendar_month</span>
   </button>
   <button onclick="sortGallery('score')">
    <span class="material-symbols-outlined">refresh</span>
@@ -122,7 +165,7 @@ width: 100%;
 </div>
 
 <div class="gallery-grid" id="galleryContainer">
-<p id="loadingStatus">読み込んでいます...</p>
+<p id="loadingStatus">date.jsonを読み込んでいます...</p>
 </div>
 </div>
 
@@ -204,12 +247,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 /**
 * date.jsonを外部からfetchで読み込む処理
-* エラー修正: DOM要素を事前に取得し、存在チェックを行う
 */
 async function loadDateJSON() {
-    // loadingStatusElementはグローバルスコープで定義済み
     const statusElement = loadingStatusElement;
-    if (!statusElement) return; // エラー回避: 要素が存在しない場合は処理を中断
+    if (!statusElement) return; 
 
     try {
         const res = await fetch('date.json');
@@ -277,11 +318,9 @@ function sortGallery(sortBy, silent = false) {
     if (sortBy === 'date') {
         // 日付降順 (新しいものが先)
         sortedWorks.sort((a, b) => new Date(getDateFromId(b.id)) - new Date(getDateFromId(a.id)));
-        // if (!silent) showNotification('日付順でソートしました。', 'success'); <--- 案内を削除
     } else { // 'score' (リセット)
         // スコア降順 (高いものが先)
         sortedWorks.sort((a, b) => b.totalScore - a.totalScore);
-        // if (!silent && worksWithScore.length > 0) { showNotification('スコア順（リセット）でソートしました。', 'success'); } <--- 案内を削除
     }
 
     renderGallery(sortedWorks);
@@ -299,7 +338,7 @@ function renderGallery(works = []) {
     works.forEach((w) => {
         const postedDate = getDateFromId(w.id);
 
-        const cardTitle = `日付: ${postedDate}\nタグ : ${(w.tags || []).join(', ')}`;
+        const cardTitle = `ID: ${w.id}\nタグ: ${(w.tags || []).join(', ')}\n♥: ${w.totalLikes}\n前回: ${w.lastLikedDate}\nスコア: ${w.totalScore.toFixed(1)}\n投稿日: ${postedDate}`;
 
         const card = document.createElement('div');
         card.className = 'work-card';
