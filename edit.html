@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>イラスト活動ログ＆評価ダッシュボード</title>
+<style>
+body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+h1 { border-bottom: 3px double #333; padding-bottom: 10px; }
+h2 { border-bottom: 2px solid #ccc; padding-bottom: 5px; margin-top: 30px; }
+.form-section, .gallery-section { margin-bottom: 40px; padding: 20px; border: 1px solid #eee; background-color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+#dataManagementSection { background-color: #fffbe6; border-color: #ffeb3b; }
+.gallery-grid { 
+display: grid; 
+grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
+gap: 20px; 
+}
+.work-card { 
+border: 1px solid #ddd; 
+padding: 10px; 
+background-color: #fff; 
+box-shadow: 1px 1px 3px rgba(0,0,0,0.1); 
+/* 相対位置指定を有効にし、ホバー検出領域とする */
+position: relative; 
+}
+
+/* --- サムネイル統一のためのCSS --- */
+.thumbnail-container {
+width: 100%;
+padding-top: 46.626%; /* 778 / 1669 * 100% */
+position: relative;
+overflow: hidden;
+margin-bottom: 10px;
+}
+.thumbnail-image {
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background-size: cover; 
+background-position: center center;
+background-repeat: no-repeat;
+}
+/* ------------------------------- */
+
+/* --- ホバーオーバーレイのCSS --- */
+.link-overlay {
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+display: flex;
+/* ボタンを両端に配置 */
+justify-content: space-between;
+align-items: center;
+/* 左右端にボタンを配置するためパディングは0 */
+padding: 0 0px; 
+background-color: rgba(0, 0, 0, 0.4); /* 背景を少し暗くする */
+opacity: 0; /* 通常は非表示 */
+transition: opacity 0.3s ease;
+z-index: 10;
+pointer-events: none; /* ホバーエリアがボタンの下にある要素に影響を与えないようにする */
+}
+/* work-cardにホバーしたときに表示 */
+.work-card:hover .link-overlay {
+opacity: 1;
+pointer-events: auto; /* ホバー時のみボタンのクリックを有効にする */
+}  
+.overlay-button_p {
+background: rgba(255, 255, 255, 0.9);
+border: none;
+border-radius: 50%;
+width: 40px;
+height: 40px;
+display: flex;
+justify-content: center;
+align-items: center;
+cursor: pointer;
+text-decoration: none;
+box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+/* 1669の半分の半分 (25%) ≒ 25% * 220px/2 = 27.5px のマージン */
+margin-left: 28px; 
+}
+
+.overlay-button_x {
+background: rgba(255, 255, 255, 0.9);
+border: none;
+border-radius: 50%;
+width: 40px;
+height: 40px;
+display: flex;
+justify-content: center;
+align-items: center;
+cursor: pointer;
+text-decoration: none;
+box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+/* 1669の半分の半分 (25%) ≒ 25% * 220px/2 = 27.5px のマージン */
+margin-right: 30px;
+}
+.overlay-button_p img {
+width: 24px;
+height: 24px;
+}
+.overlay-button_x img {
+width: 24px;
+height: 24px;
+}
+/* --- ホバーオーバーレイのCSSここまで --- */
+
+
+#likeInputContainer { border: 1px dashed #ccc; padding: 15px; margin-top: 10px; background-color: #fcfcfc; }
+input, select, textarea { padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+button { padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; background-color: #007bff; color: white; transition: background-color 0.3s; }
+button:hover { background-color: #0056b3; }
+#likeForm button:last-child { background-color: #28a745; }
+#likeForm button:last-child:hover { background-color: #1e7e34; }
+.analysis-section { margin-bottom: 30px; padding: 15px; border: 1px solid #ddd; background-color: #f9f9f9; }
+.analysis-section ul { list-style: none; padding-left: 0; }
+.analysis-section li { margin-bottom: 5px; }
+
+/* --- カスタム通知用のスタイル --- */
+#notificationContainer {
+position: fixed;
+top: 20px;
+right: 20px;
+z-index: 1000; 
+}
+.notification {
+color: white;
+padding: 10px 20px;
+margin-bottom: 10px;
+border-radius: 4px;
+opacity: 0;
+transition: opacity 0.5s, transform 0.5s;
+transform: translateX(100%);
+box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+min-width: 250px;
+font-size: 0.95em;
+}
+.notification.show {
+opacity: 0.95;
+transform: translateX(0);
+}
+.notification.error {
+background-color: #dc3545; /* 赤色でエラーを強調 */
+}
+.notification.success {
+background-color: #28a745; /* 緑色で成功を強調 */
+}
+/* -------------------------------------- */
+</style>
+</head>
+<body>
+
+<div id="notificationContainer"></div>
+
+<h1>イラスト活動ログダッシュボード</h1>
+
+<div class="form-section">
+<h2>✏️ 活動の記録</h2>
+<p>記録日: <span id="currentDate"></span></p>
+
+<label for="recordType">記録の種類:</label>
+<select id="recordType" onchange="toggleRecordForm(this.value)">
+<option value="post">新規投稿作品の記録</option>
+<option value="like">過去作へのいいね記録</option>
+</select>
+
+<div id="postForm" style="display:block; margin-top:15px;">
+<p><strong>[新規投稿]</strong> 作品情報</p>
+<label for="postPixivUrl">Pixiv URL:</label>
+<input type="url" id="postPixivUrl" placeholder="Pixiv作品のURL" required style="width: 80%;"><br><br>
+<label for="postXUrl">X URL:</label>
+<input type="url" id="postXUrl" placeholder="XポストURL" required style="width: 80%;"><br><br>
+<label for="postThumbnailUrl">サムネ:</label>
+<input type="url" id="postThumbnailUrl" placeholder="サムネイル表示用のXポストURL" required style="width: 80%;"><br><br>
+
+<label for="postTags">タグ オリジナル, イラスト, 創作:</label>
+<input type="text" id="postTags" placeholder="創作, 女の子, オリジナル" style="width: 80%;"><br><br>
+
+<button onclick="recordNewPost()">新規投稿を記録</button>
+</div>
+
+<div id="likeForm" style="display:none; margin-top:15px;">
+<p><strong>[過去作いいね記録]</strong></p>
+<div id="likeInputContainer"></div>
+<button onclick="addLikeInput()">＋いいね記録を追加</button>
+<button onclick="recordAllLikes()" style="margin-left: 10px;">本日分のいいねを記録</button>
+</div>
+</div>
+
+<div class="form-section" id="dataManagementSection">
+<h2>💾 データ管理</h2>
+<button onclick="copyJSON()" style="background-color:#ff9800;">JSONをコピー</button>
+<p style="font-size:0.9em; color:#666;">※**date.jsonを同階層に置き、fetchで読み込みます。**変更したデータは、このボタンでコピーし、ファイルに貼り付けて保存してください。</p>
+</div>
+
+<div class="gallery-section">
+<h2>📊 分析結果</h2>
+<div class="analysis-section" id="analysisSection">
+<p>作品データが読み込まれていません。</p>
+</div>
+
+<h2>🖼️ ギャラリー</h2>
+<div class="gallery-grid" id="galleryContainer">
+<p id="loadingStatus">date.jsonを読み込んでいます...</p>
+</div>
+</div>
+
+
+<script>
+// JSON構造: { id: "20251109", p_u: "...", x_u: "...", s_u: "...", tags: [], l: [{d, c}] }
+let appData = { illustrations: [] }; 
+
+// アイコンURLの定義
+const ICON_P = "https://play-lh.googleusercontent.com/Ls9opXo6-wfEWmbBU8heJaFS8HwWydssWE1J3vexIGvkF-UJDqcW7ZMD8w6dQABfygONd4z3Yt4TfRDZAPYq=w240-h480-rw";
+const ICON_X = "https://play-lh.googleusercontent.com/XyI6Hyz9AFg7E_joVzX2zh6CpWm9B2DG2JuEz5meCFVm4-wTKTnHgqbmg62iFKe4Gzca=w240-h480-rw";
+
+// --- カスタム通知関数 ---
+function showNotification(message, type = 'success') {
+const container = document.getElementById('notificationContainer');
+if (!container) return;
+
+const notification = document.createElement('div');
+notification.className = `notification ${type}`;
+notification.textContent = message;
+
+container.appendChild(notification);
+
+setTimeout(() => {
+notification.classList.add('show');
+}, 100);
+
+setTimeout(() => {
+notification.classList.remove('show');
+setTimeout(() => {
+notification.remove();
+}, 500); 
+}, 5000); 
+}
+// --------------------------
+
+// ヘルパー関数: 作品ID（例: "20251109"）から投稿日（例: "2025-11-09"）を取得
+function getDateFromId(id) {
+if (id && id.match(/^\d{8}$/)) { 
+const datePart = id.substring(0, 8);
+return `${datePart.substring(0, 4)}-${datePart.substring(4, 6)}-${datePart.substring(6, 8)}`;
+}
+if (id && id.match(/^\d{10}$/)) { 
+const datePart = id.substring(0, 8);
+return `${datePart.substring(0, 4)}-${datePart.substring(4, 6)}-${datePart.substring(6, 8)}`;
+}
+return getFormattedDate(); 
+}
+
+// 履歴のタグを内部変数名（likes_history）に変換するヘルパー関数
+function normalizeWorkData(item) {
+// 過去の形式 (likes_history) の場合は、新しい形式 (l) に変換
+if (item.likes_history) {
+item.l = item.likes_history.map(h => ({
+d: h.liked_date, 
+// e (elapsed_days) は削除し、dから計算するように変更
+c: h.count
+}));
+delete item.likes_history;
+}
+    // 互換性のため、古いデータにeが存在する場合は削除（データファイルとして保持しないため）
+    if(item.l){
+        item.l = item.l.map(h => {
+            const { e, ...rest } = h; // eを削除
+            return rest;
+        });
+    }
+
+// 過去の形式で s_u がない場合は x_u を使用する
+if (!item.s_u && item.x_u) {
+item.s_u = item.x_u;
+}
+return item;
+}
+
+function getFormattedDate(d = new Date()) { return d.toISOString().split('T')[0]; }
+// 投稿日 (d1) と記録日 (d2) から経過日数を計算
+function getElapsedDays(d1, d2) { return Math.max(0, Math.ceil((new Date(d2)-new Date(d1))/(1000*60*60*24))); }
+// 経過日数に基づいて乗数を動的に計算
+function getMultiplier(days){ if(days>=365)return 4; if(days>=181)return 3; if(days>=91)return 2; if(days>=31)return 1.5; return 1; }
+
+document.addEventListener('DOMContentLoaded', async () => {
+document.getElementById('currentDate').textContent = getFormattedDate();
+await loadDateJSON();
+});
+
+/**
+* date.jsonを外部からfetchで読み込む処理
+*/
+async function loadDateJSON(){
+try {
+const res = await fetch('date.json');
+if (!res.ok) throw new Error(`HTTPエラー: ${res.status}`);
+let rawData = await res.json();
+
+if (rawData && rawData.illustrations && Array.isArray(rawData.illustrations)) {
+rawData = rawData.illustrations;
+} else if (!Array.isArray(rawData)) {
+throw new Error('JSONファイル形式が不正です。');
+}
+
+// 読み込んだデータを新しい形式に正規化
+appData.illustrations = rawData.map(item => normalizeWorkData(item)); 
+
+renderGallery();
+document.getElementById('loadingStatus').textContent = `date.json (${appData.illustrations.length}件の作品) を読み込みました。`;
+} catch (err) {
+console.error("JSON読み込みエラー:", err);
+document.getElementById('loadingStatus').textContent = 'date.jsonを読み込めませんでした。空のデータで開始します。';
+
+appData.illustrations = [];
+renderGallery(); 
+}
+}
+
+function toggleRecordForm(v){
+document.getElementById('postForm').style.display = v==='post'?'block':'none';
+document.getElementById('likeForm').style.display = v==='like'?'block':'none';
+if(v==='like') loadLikeInputs();
+}
+
+function loadLikeInputs(){
+const c=document.getElementById('likeInputContainer'); c.innerHTML='';
+if(appData.illustrations.length===0){ c.innerHTML='<p style="color:red;">作品がありません。</p>'; return; }
+addLikeInput();
+}
+
+function addLikeInput(){
+const c=document.getElementById('likeInputContainer');
+const i=c.children.length;
+// 投稿日はIDから取得して表示
+const options=appData.illustrations.map(w=>`<option value="${w.id}">${w.id} (${getDateFromId(w.id)})</option>`).join('');
+const div=document.createElement('div');
+div.innerHTML=`<select id="likeWork_${i}"><option value="">作品を選択</option>${options}</select>
+<input type="number" id="likeCount_${i}" min="1" value="1" style="width:70px;">
+<button onclick="this.parentElement.remove()">－</button>`;
+c.appendChild(div);
+}
+
+function recordNewPost(){
+const p=document.getElementById('postPixivUrl').value.trim();
+const x=document.getElementById('postXUrl').value.trim();
+const s=document.getElementById('postThumbnailUrl').value.trim(); // サムネイル用URLを追加
+const tagsInput = document.getElementById('postTags').value.trim();
+
+if(!p||!x||!s){
+showNotification('Pixiv URL, X URL, サムネイル用X URLの全てを入力してください', 'error');
+return;
+}
+
+const dateStr = getFormattedDate().replace(/-/g, ''); // YYYYMMDD
+let id = dateStr; 
+
+if(appData.illustrations.find(i=>i.id===id)){
+showNotification('エラー: 本日（' + id + '）は既に作品が登録されています。同一日には複数作品を登録できません。', 'error');
+return;
+}
+
+const tags = tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+if (tags.length === 0) tags.push('未分類');
+
+// 新しいデータ構造に合わせてキー名を変更
+const newPost = {
+id: id,
+p_u: p, 
+x_u: x, 
+s_u: s.replace('/status/', '/photo/1'), // サムネイルURLを画像直リンク形式に変換 (X/Twitter画像URLの慣習)
+tags: tags,
+l: [] // 履歴 (likes_history -> l) を初期化
+};
+
+appData.illustrations.push(newPost);
+showNotification('新規投稿を記録しました。保存するには「JSONをコピー」し、date.jsonに貼り付けてください。ID: ' + id, 'success');
+
+document.getElementById('postPixivUrl').value = '';
+document.getElementById('postXUrl').value = '';
+document.getElementById('postThumbnailUrl').value = '';
+document.getElementById('postTags').value = '';
+renderGallery();
+}
+
+function recordAllLikes(){
+const rows=document.getElementById('likeInputContainer').children;
+const date=getFormattedDate();
+let totalScore=0;
+let totalLikesCount = 0;
+let recordedWorkCount = 0;
+
+for(let r of rows){
+const id=r.querySelector('select').value;
+const count=parseInt(r.querySelector('input').value); 
+if(!id||!count||count<=0)continue;
+
+const w=appData.illustrations.find(i=>i.id===id);
+if(!w)continue;
+
+const postedDate = getDateFromId(w.id); 
+const days=getElapsedDays(postedDate,date); // 経過日数を計算
+const m=getMultiplier(days); 
+
+totalScore += count * (1 * m);
+totalLikesCount += count;
+recordedWorkCount++;
+
+if(!w.l) w.l = []; // 新しいキー 'l' を使用
+
+// 既存の同日記録を探す
+const existingEntryIndex = w.l.findIndex(entry => entry.d === date); // 'liked_date' -> 'd'
+
+if (existingEntryIndex !== -1) {
+// 既存のエントリがあれば、countを加算
+w.l[existingEntryIndex].c += count; // 'count' -> 'c'
+} else {
+// 新しいエントリを追加: e (経過日数) は保存しない
+w.l.push({
+d: date, // liked_date -> d
+c: count // count -> c
+});
+}
+}
+
+if (recordedWorkCount > 0) {
+showNotification(`本日分のいいねを記録しました（${recordedWorkCount}作品 / 合計いいね回数:${totalLikesCount}回 / スコア:${totalScore.toFixed(1)}）。保存するには「JSONをコピー」し、date.jsonに貼り付けてください。`, 'success');
+// 入力欄をリセット
+loadLikeInputs(); 
+renderGallery();
+} else {
+showNotification('記録対象のデータがありませんでした。作品を選択し、いいね数を入力してください。', 'error');
+}
+}
+
+function renderGallery(){
+const c = document.getElementById('galleryContainer');
+c.innerHTML = '';
+
+const analysisSection = document.getElementById('analysisSection');
+
+if (appData.illustrations.length === 0) {
+c.innerHTML = '<p>作品がありません。</p>';
+analysisSection.innerHTML = '<p>作品データがありません。</p>';
+return;
+}
+
+// --- タグ分析の計算 ---
+const tagScores = {};
+appData.illustrations.forEach(w => {
+const postedDate = getDateFromId(w.id); 
+// スコアの再計算 (l, c を使用し、e は動的に計算)
+const totalScore = (w.l || []).reduce((s, h) => {
+    const days = getElapsedDays(postedDate, h.d); // 記録日 (h.d) と投稿日 (postedDate) からeを計算
+    return s + (h.c * getMultiplier(days));
+}, 0);
+
+(w.tags || []).forEach(tag => {
+tagScores[tag] = (tagScores[tag] || 0) + totalScore;
+});
+});
+
+const sortedTags = Object.entries(tagScores)
+.sort(([, scoreA], [, scoreB]) => scoreB - scoreA);
+
+// --- 分析結果の表示 ---
+let analysisHTML = '<h3>タグ別評価スコアランキング</h3>';
+if (sortedTags.length > 0) {
+analysisHTML += '<ul>';
+sortedTags.forEach(([tag, score]) => {
+analysisHTML += `<li>${tag}: <b>${score.toFixed(1)}</b></li>`;
+});
+analysisHTML += '</ul>';
+} else {
+analysisHTML += '<p>データがありません。</p>';
+}
+analysisSection.innerHTML = analysisHTML;
+
+// --- ギャラリーカードの表示 ---
+const works = [...appData.illustrations].sort((a,b) => new Date(getDateFromId(b.id)) - new Date(getDateFromId(a.id)));
+
+works.forEach((w, i) => {
+const history = w.l || []; // l を使用
+const postedDate = getDateFromId(w.id); 
+
+// 総いいね数と総スコアの計算
+const totalLikes = history.reduce((s, h) => s + h.c, 0); // c を使用
+const totalScore = history.reduce((s, h) => {
+    const days = getElapsedDays(postedDate, h.d); // 記録日 (h.d) と投稿日 (postedDate) からeを計算
+    return s + (h.c * getMultiplier(days));
+}, 0); 
+
+// 最後にいいねされた日付を特定 (d を使用)
+const lastLikedDate = history.length > 0 
+? history.map(h => h.d)
+.sort() 
+.pop() 
+: '—'; 
+
+const tagDisplay = (w.tags || []).join(', ') || '—';
+
+const card = document.createElement('div');
+card.className = 'work-card';
+card.innerHTML = `
+<div class="thumbnail-container">
+<div class="thumbnail-image" 
+style="background-image: url('${w.s_u}');">
+</div>
+<div class="link-overlay">
+<a href="${w.p_u}" target="_blank" class="overlay-button_p">
+<img src="${ICON_P}" alt="Pixiv">
+</a>
+<a href="${w.x_u}" target="_blank" class="overlay-button_x">
+<img src="${ICON_X}" alt="X">
+</a>
+</div>
+</div>
+<p>投稿日: ${postedDate}</p>
+<p>タグ: ${tagDisplay}</p>
+<p>♥数: <b>${totalLikes}</b></p>
+<p>前回: <b>${lastLikedDate}</b></p>
+<p>スコア: <b>${totalScore.toFixed(1)}</b></p>
+`;
+c.appendChild(card);
+});
+}
+
+/**
+* JSON形式でコピーする処理 (インデントに半角スペースを使用)
+*/
+function copyJSON(){
+// JSON出力用にデータを生成
+const outputData = appData.illustrations.map(item => {
+const cleanItem = { ...item };
+
+// l (likes_history) を処理
+if (cleanItem.l) {
+cleanItem.l = cleanItem.l.map(history => {
+// JSONに含めるのは d, c のみ (e は削除)
+return { d: history.d, c: history.c };
+});
+}
+
+// 過去のlikes_historyが残っている場合は削除
+delete cleanItem.likes_history; 
+return cleanItem;
+});
+
+// 各作品オブジェクトを整形せずに一行で文字列化し、カンマと改行で結合
+const illustrationsString = outputData.map(item => JSON.stringify(item)).join(',\n');
+
+// 最終的なJSON構造
+const jsonText = `{
+"illustrations": [
+${illustrationsString}
+]
+}`;
+
+// Clipboard APIを使用してコピー
+navigator.clipboard.writeText(jsonText)
+.then(() => showNotification('JSONをコピーしました！ date.jsonに上書き保存してください。', 'success'))
+.catch(() => showNotification('コピーに失敗しました', 'error'));
+}
+</script>
+</body>
+</html>
