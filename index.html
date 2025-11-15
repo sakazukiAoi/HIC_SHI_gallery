@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>イラストギャラリー</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+<style>
+body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+h1 { display: none; /* タイトルを非表示に */ }
+h2 { border-bottom: 2px solid #ccc; padding-bottom: 5px; margin-top: 0; }
+.gallery-section { margin-bottom: 40px; padding: 20px; border: 1px solid #eee; background-color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+/* === Google Fonts Material Symbols Icons === */
+.material-symbols-outlined {
+    /* アイコンの視覚的な設定 */
+    font-variation-settings:
+        'FILL' 0,
+        'wght' 400,
+        'GRAD' 0,
+        'opsz' 24;
+    
+    /* アイコンフォントの基本的な設定 */
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: "liga";
+    -webkit-font-smoothing: antialiased;
+}
+/* ================================== */
+
+/* --- ギャラリーヘッダーとボタンの配置 --- */
+#galleryHeader {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+#galleryHeader h2 {
+    margin: 0;
+    margin-right: 15px;
+    border-bottom: none;
+    padding-bottom: 0;
+}
+#sortButtons {
+    display: flex;
+    gap: 10px;
+}
+#sortButtons button {
+    background-color: #6c757d;
+    color: white; 
+    border: none; 
+    border-radius: 4px; 
+    cursor: pointer; 
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 10px;
+    font-size: 0.9em;
+    height: 35px;
+}
+#sortButtons button:hover {
+    background-color: #5a6268;
+}
+
+/* --- ギャラリーレイアウト --- */
+.gallery-grid {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+gap: 0;
+}
+.work-card {
+border: 1px solid #ddd;
+padding: 0;
+background-color: #fff;
+box-shadow: 0 0 5px rgba(0,0,0,0.1);
+position: relative;
+width: 100%;
+}
+
+/* --- サムネイル表示とオーバーレイ --- */
+.thumbnail-container { width: 100%; position: relative; overflow: hidden; margin-bottom: 0; display: block; }
+.thumbnail-image { position: relative; width: 100%; height: auto; display: block; background-size: cover; background-position: center center; background-repeat: no-repeat; min-height: 180px; }
+.link-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: space-between; align-items: center; padding: 0 0px; background-color: rgba(0, 0, 0, 0.4); opacity: 0; transition: opacity 0.3s ease; z-index: 10; pointer-events: none; }
+.work-card:hover .link-overlay { opacity: 1; pointer-events: auto; }
+.overlay-button_p, .overlay-button_x { background: rgba(255, 255, 255, 0.9); border: none; border-radius: 50%; width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; cursor: pointer; text-decoration: none; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); }
+.overlay-button_p { margin-left: 25px; }
+.overlay-button_x { margin-right: 30px; }
+.overlay-button_p img, .overlay-button_x img { width: 24px; height: 24px; }
+
+/* --- 通知スタイル --- */
+#notificationContainer { position: fixed; top: 20px; right: 20px; z-index: 1000;}
+.notification { color: white; padding: 10px 20px; margin-bottom: 10px; border-radius: 4px; opacity: 0; transition: opacity 0.5s, transform 0.5s; transform: translateX(100%); box-shadow: 0 4px 8px rgba(0,0,0,0.2); min-width: 250px; font-size: 0.95em; }
+.notification.show { opacity: 0.95; transform: translateX(0); }
+.notification.error { background-color: #dc3545; }
+.notification.success { background-color: #28a745; }
+</style>
+</head>
+<body>
+
+<div id="notificationContainer"></div>
+
+<div class="gallery-section">
+
+<div id="galleryHeader">
+ <h2>🖼️ ギャラリー</h2>
+ <div id="sortButtons">
+  <button onclick="sortGallery('date')">
+           <span class="material-symbols-outlined">calendar_month</span>
+  </button>
+  <button onclick="sortGallery('score')">
+   <span class="material-symbols-outlined">refresh</span>
+  </button>
+ </div>
+</div>
+
+<div class="gallery-grid" id="galleryContainer">
+<p id="loadingStatus">読み込んでいます...</p>
+</div>
+</div>
+
+
+<script>
+// JSON構造: { id: "20251109", p_u: "...", x_u: "...", s_u: "...", tags: [], l: [{d, c}] }
+let appData = { illustrations: [] };
+let worksWithScore = [];
+
+const ICON_P = "https://play-lh.googleusercontent.com/Ls9opXo6-wfEWmbBU8heJaFS8HwWydssWE1J3vexIGvkF-UJDqcW7ZMD8w6dQABfygONd4z3Yt4TfRDZAPYq=w240-h480-rw";
+const ICON_X = "https://play-lh.googleusercontent.com/XyI6Hyz9AFg7E_joVzX2zh6CpWm9B2DG2JuEz5meCFVm4-wTKTnHgqbmg62iFKe4Gzca=w240-h480-rw";
+
+// DOM要素をキャッシュ
+const loadingStatusElement = document.getElementById('loadingStatus');
+
+// --- カスタム通知関数 (維持) ---
+function showNotification(message, type = 'success') {
+const container = document.getElementById('notificationContainer');
+if (!container) return;
+
+const notification = document.createElement('div');
+notification.className = `notification ${type}`;
+notification.textContent = message;
+
+container.appendChild(notification);
+
+setTimeout(() => {
+notification.classList.add('show');
+}, 100);
+
+setTimeout(() => {
+notification.classList.remove('show');
+setTimeout(() => {
+notification.remove();
+}, 500);
+}, 5000);
+}
+// --------------------------
+
+// --- データ処理/ソートに必要な関数 (維持) ---
+function getDateFromId(id) {
+if (id && id.match(/^\d{8}$/)) {
+const datePart = id.substring(0, 8);
+return `${datePart.substring(0, 4)}-${datePart.substring(4, 6)}-${datePart.substring(6, 8)}`;
+}
+if (id && id.match(/^\d{10}$/)) {
+const datePart = id.substring(0, 8);
+return `${datePart.substring(0, 4)}-${datePart.substring(4, 6)}-${datePart.substring(6, 8)}`;
+}
+return getFormattedDate();
+}
+
+function normalizeWorkData(item) {
+if (item.likes_history) {
+item.l = item.likes_history.map(h => ({ d: h.liked_date, c: h.count }));
+delete item.likes_history;
+}
+  if (item.l) {
+    item.l = item.l.map(h => {
+      const { e, ...rest } = h;
+      return rest;
+    });
+  }
+
+if (!item.s_u && item.x_u) {
+item.s_u = item.x_u;
+}
+return item;
+}
+
+function getFormattedDate(d = new Date()) { return d.toISOString().split('T')[0]; }
+function getElapsedDays(d1, d2) { return Math.max(0, Math.ceil((new Date(d2) - new Date(d1)) / (1000 * 60 * 60 * 24))); }
+function getMultiplier(days) { if (days >= 365) return 4; if (days >= 181) return 3; if (days >= 91) return 2; if (days >= 31) return 1.5; return 1; }
+
+document.addEventListener('DOMContentLoaded', async () => {
+    // loadingStatusElementはDOMが構築された後に確実に取得される
+    await loadDateJSON();
+});
+
+/**
+* date.jsonを外部からfetchで読み込む処理
+* エラー修正: DOM要素を事前に取得し、存在チェックを行う
+*/
+async function loadDateJSON() {
+    // loadingStatusElementはグローバルスコープで定義済み
+    const statusElement = loadingStatusElement;
+    if (!statusElement) return; // エラー回避: 要素が存在しない場合は処理を中断
+
+    try {
+        const res = await fetch('date.json');
+        if (!res.ok) throw new Error(`HTTPエラー: ${res.status}`);
+        let rawData = await res.json();
+
+        if (rawData && rawData.illustrations && Array.isArray(rawData.illustrations)) {
+            rawData = rawData.illustrations;
+        } else if (!Array.isArray(rawData)) {
+            throw new Error('JSONファイル形式が不正です。');
+        }
+
+        appData.illustrations = rawData.map(item => normalizeWorkData(item));
+
+        calculateWorkScores();
+        sortGallery('score', true);
+
+        statusElement.textContent = `date.json (${appData.illustrations.length}件の作品) を読み込みました。`;
+
+    } catch (err) {
+        console.error("JSON読み込みエラー:", err);
+        statusElement.textContent = 'date.jsonを読み込めませんでした。空のデータで開始します。';
+
+        appData.illustrations = [];
+        worksWithScore = [];
+        renderGallery();
+    }
+}
+
+
+function calculateWorkScores() {
+    worksWithScore = appData.illustrations.map(w => {
+        const postedDate = getDateFromId(w.id);
+        
+        const totalScore = (w.l || []).reduce((s, h) => {
+            const days = getElapsedDays(postedDate, h.d);
+            return s + (h.c * getMultiplier(days));
+        }, 0);
+
+        const totalLikes = (w.l || []).reduce((s, h) => s + h.c, 0);
+        const lastLikedDate = (w.l || []).length > 0
+            ? (w.l || []).map(h => h.d).sort().pop()
+            : '—';
+
+        return {
+            ...w,
+            totalScore: totalScore,
+            totalLikes: totalLikes,
+            lastLikedDate: lastLikedDate
+        };
+    });
+}
+
+/**
+* ギャラリーのソートと描画を行う
+*/
+function sortGallery(sortBy, silent = false) {
+    if (worksWithScore.length === 0) {
+        renderGallery();
+        return;
+    }
+
+    let sortedWorks = [...worksWithScore];
+
+    if (sortBy === 'date') {
+        // 日付降順 (新しいものが先)
+        sortedWorks.sort((a, b) => new Date(getDateFromId(b.id)) - new Date(getDateFromId(a.id)));
+        // if (!silent) showNotification('日付順でソートしました。', 'success'); <--- 案内を削除
+    } else { // 'score' (リセット)
+        // スコア降順 (高いものが先)
+        sortedWorks.sort((a, b) => b.totalScore - a.totalScore);
+        // if (!silent && worksWithScore.length > 0) { showNotification('スコア順（リセット）でソートしました。', 'success'); } <--- 案内を削除
+    }
+
+    renderGallery(sortedWorks);
+}
+
+function renderGallery(works = []) {
+    const c = document.getElementById('galleryContainer');
+    c.innerHTML = '';
+
+    if (works.length === 0) {
+        c.innerHTML = '<p>作品がありません。</p>';
+        return;
+    }
+
+    works.forEach((w) => {
+        const postedDate = getDateFromId(w.id);
+
+        const cardTitle = `日付: ${postedDate}\nタグ : ${(w.tags || []).join(', ')}`;
+
+        const card = document.createElement('div');
+        card.className = 'work-card';
+        card.title = cardTitle;
+
+        card.innerHTML = `
+        <div class="thumbnail-container">
+        <div class="thumbnail-image"
+        style="background-image: url('${w.s_u}');">
+        </div>
+        <div class="link-overlay">
+        <a href="${w.p_u}" target="_blank" class="overlay-button_p">
+        <img src="${ICON_P}" alt="Pixiv">
+        </a>
+        <a href="${w.x_u}" target="_blank" class="overlay-button_x">
+        <img src="${ICON_X}" alt="X">
+        </a>
+        </div>
+        </div>
+        `;
+        c.appendChild(card);
+    });
+}
+</script>
+</body>
+</html>
