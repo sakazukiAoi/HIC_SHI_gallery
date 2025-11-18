@@ -10,18 +10,18 @@ h1 { border-bottom: 3px double #333; padding-bottom: 10px; }
 h2 { border-bottom: 2px solid #ccc; padding-bottom: 5px; margin-top: 30px; }
 .form-section, .gallery-section { margin-bottom: 40px; padding: 20px; border: 1px solid #eee; background-color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 #dataManagementSection { background-color: #fffbe6; border-color: #ffeb3b; }
-.gallery-grid { 
-display: grid; 
-grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
-gap: 20px; 
+.gallery-grid {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+gap: 20px;
 }
-.work-card { 
-border: 1px solid #ddd; 
-padding: 10px; 
-background-color: #fff; 
-box-shadow: 1px 1px 3px rgba(0,0,0,0.1); 
+.work-card {
+border: 1px solid #ddd;
+padding: 10px;
+background-color: #fff;
+box-shadow: 1px 1px 3px rgba(0,0,0,0.1);
 /* 相対位置指定を有効にし、ホバー検出領域とする */
-position: relative; 
+position: relative;
 }
 
 /* --- サムネイル統一のためのCSS --- */
@@ -38,7 +38,7 @@ top: 0;
 left: 0;
 width: 100%;
 height: 100%;
-background-size: cover; 
+background-size: cover;
 background-position: center center;
 background-repeat: no-repeat;
 }
@@ -56,7 +56,7 @@ display: flex;
 justify-content: space-between;
 align-items: center;
 /* 左右端にボタンを配置するためパディングは0 */
-padding: 0 0px; 
+padding: 0 0px;
 background-color: rgba(0, 0, 0, 0.4); /* 背景を少し暗くする */
 opacity: 0; /* 通常は非表示 */
 transition: opacity 0.3s ease;
@@ -67,7 +67,7 @@ pointer-events: none; /* ホバーエリアがボタンの下にある要素に�
 .work-card:hover .link-overlay {
 opacity: 1;
 pointer-events: auto; /* ホバー時のみボタンのクリックを有効にする */
-}  
+}
 .overlay-button_p {
 background: rgba(255, 255, 255, 0.9);
 border: none;
@@ -81,7 +81,7 @@ cursor: pointer;
 text-decoration: none;
 box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 /* 1669の半分の半分 (25%) ≒ 25% * 220px/2 = 27.5px のマージン */
-margin-left: 28px; 
+margin-left: 28px;
 }
 
 .overlay-button_x {
@@ -125,7 +125,7 @@ button:hover { background-color: #0056b3; }
 position: fixed;
 top: 20px;
 right: 20px;
-z-index: 1000; 
+z-index: 1000;
 }
 .notification {
 color: white;
@@ -155,8 +155,6 @@ background-color: #28a745; /* 緑色で成功を強調 */
 <body>
 
 <div id="notificationContainer"></div>
-
-<h1>イラスト活動ログダッシュボード</h1>
 
 <div class="form-section">
 <h2>✏️ 活動の記録</h2>
@@ -191,28 +189,22 @@ background-color: #28a745; /* 緑色で成功を強調 */
 </div>
 </div>
 
-<div class="form-section" id="dataManagementSection">
-<h2>💾 データ管理</h2>
-<button onclick="copyJSON()" style="background-color:#ff9800;">JSONをコピー</button>
-<p style="font-size:0.9em; color:#666;">※**date.jsonを同階層に置き、fetchで読み込みます。**変更したデータは、このボタンでコピーし、ファイルに貼り付けて保存してください。</p>
-</div>
-
 <div class="gallery-section">
-<h2>📊 分析結果</h2>
-<div class="analysis-section" id="analysisSection">
-<p>作品データが読み込まれていません。</p>
-</div>
-
 <h2>🖼️ ギャラリー</h2>
 <div class="gallery-grid" id="galleryContainer">
-<p id="loadingStatus">date.jsonを読み込んでいます...</p>
+<p id="loadingStatus">読み込み中...</p>
+</div>
+<p></p>
+<h2>🏷️ タグランキング</h2>
+<div class="analysis-section" id="analysisSection">
+<p>作品データが読み込まれていません。</p>
 </div>
 </div>
 
 
 <script>
 // JSON構造: { id: "20251109", p_u: "...", x_u: "...", s_u: "...", tags: [], l: [{d, c}] }
-let appData = { illustrations: [] }; 
+let appData = { illustrations: [] };
 
 // アイコンURLの定義
 const ICON_P = "https://play-lh.googleusercontent.com/Ls9opXo6-wfEWmbBU8heJaFS8HwWydssWE1J3vexIGvkF-UJDqcW7ZMD8w6dQABfygONd4z3Yt4TfRDZAPYq=w240-h480-rw";
@@ -237,22 +229,22 @@ setTimeout(() => {
 notification.classList.remove('show');
 setTimeout(() => {
 notification.remove();
-}, 500); 
-}, 5000); 
+}, 500);
+}, 5000);
 }
 // --------------------------
 
 // ヘルパー関数: 作品ID（例: "20251109"）から投稿日（例: "2025-11-09"）を取得
 function getDateFromId(id) {
-if (id && id.match(/^\d{8}$/)) { 
+if (id && id.match(/^\d{8}$/)) {
 const datePart = id.substring(0, 8);
 return `${datePart.substring(0, 4)}-${datePart.substring(4, 6)}-${datePart.substring(6, 8)}`;
 }
-if (id && id.match(/^\d{10}$/)) { 
+if (id && id.match(/^\d{10}$/)) {
 const datePart = id.substring(0, 8);
 return `${datePart.substring(0, 4)}-${datePart.substring(4, 6)}-${datePart.substring(6, 8)}`;
 }
-return getFormattedDate(); 
+return getFormattedDate();
 }
 
 // 履歴のタグを内部変数名（likes_history）に変換するヘルパー関数
@@ -260,24 +252,20 @@ function normalizeWorkData(item) {
 // 過去の形式 (likes_history) の場合は、新しい形式 (l) に変換
 if (item.likes_history) {
 item.l = item.likes_history.map(h => ({
-d: h.liked_date, 
+d: h.liked_date,
 // e (elapsed_days) は削除し、dから計算するように変更
 c: h.count
 }));
 delete item.likes_history;
 }
-    // 互換性のため、古いデータにeが存在する場合は削除（データファイルとして保持しないため）
-    if(item.l){
-        item.l = item.l.map(h => {
-            const { e, ...rest } = h; // eを削除
-            return rest;
-        });
-    }
+  // 互換性のため、古いデータにeが存在する場合は削除（データファイルとして保持しないため）
+  if(item.l){
+    item.l = item.l.map(h => {
+      const { e, ...rest } = h; // eを削除
+      return rest;
+    });
+  }
 
-// 過去の形式で s_u がない場合は x_u を使用する
-if (!item.s_u && item.x_u) {
-item.s_u = item.x_u;
-}
 return item;
 }
 
@@ -292,9 +280,7 @@ document.getElementById('currentDate').textContent = getFormattedDate();
 await loadDateJSON();
 });
 
-/**
-* date.jsonを外部からfetchで読み込む処理
-*/
+//　date.jsonを外部からfetchで読み込む処理
 async function loadDateJSON(){
 try {
 const res = await fetch('date.json');
@@ -308,16 +294,16 @@ throw new Error('JSONファイル形式が不正です。');
 }
 
 // 読み込んだデータを新しい形式に正規化
-appData.illustrations = rawData.map(item => normalizeWorkData(item)); 
+appData.illustrations = rawData.map(item => normalizeWorkData(item));
 
 renderGallery();
-document.getElementById('loadingStatus').textContent = `date.json (${appData.illustrations.length}件の作品) を読み込みました。`;
+document.getElementById('loadingStatus').textContent = `データを読み込みました。`;
 } catch (err) {
-console.error("JSON読み込みエラー:", err);
-document.getElementById('loadingStatus').textContent = 'date.jsonを読み込めませんでした。空のデータで開始します。';
+console.error("読み込みエラー:", err);
+document.getElementById('loadingStatus').textContent = 'データを読み込めませんでした。';
 
 appData.illustrations = [];
-renderGallery(); 
+renderGallery();
 }
 }
 
@@ -352,15 +338,15 @@ const s=document.getElementById('postThumbnailUrl').value.trim(); // サムネ�
 const tagsInput = document.getElementById('postTags').value.trim();
 
 if(!p||!x||!s){
-showNotification('Pixiv URL, X URL, サムネイル用X URLの全てを入力してください', 'error');
+showNotification('Pixiv,X,サムネイルのURLを全てに入力してください', 'error');
 return;
 }
 
 const dateStr = getFormattedDate().replace(/-/g, ''); // YYYYMMDD
-let id = dateStr; 
+let id = dateStr;
 
 if(appData.illustrations.find(i=>i.id===id)){
-showNotification('エラー: 本日（' + id + '）は既に作品が登録されています。同一日には複数作品を登録できません。', 'error');
+showNotification('エラー: 本日（' + id + '）は既に作品が登録されています。', 'error');
 return;
 }
 
@@ -370,15 +356,15 @@ if (tags.length === 0) tags.push('未分類');
 // 新しいデータ構造に合わせてキー名を変更
 const newPost = {
 id: id,
-p_u: p, 
-x_u: x, 
+p_u: p,
+x_u: x,
 s_u: s.replace('/status/', '/photo/1'), // サムネイルURLを画像直リンク形式に変換 (X/Twitter画像URLの慣習)
 tags: tags,
 l: [] // 履歴 (likes_history -> l) を初期化
 };
 
 appData.illustrations.push(newPost);
-showNotification('新規投稿を記録しました。保存するには「JSONをコピー」し、date.jsonに貼り付けてください。ID: ' + id, 'success');
+showNotification('新規投稿を記録しました。ID: ' + id, 'success');
 
 document.getElementById('postPixivUrl').value = '';
 document.getElementById('postXUrl').value = '';
@@ -396,15 +382,15 @@ let recordedWorkCount = 0;
 
 for(let r of rows){
 const id=r.querySelector('select').value;
-const count=parseInt(r.querySelector('input').value); 
+const count=parseInt(r.querySelector('input').value);
 if(!id||!count||count<=0)continue;
 
 const w=appData.illustrations.find(i=>i.id===id);
 if(!w)continue;
 
-const postedDate = getDateFromId(w.id); 
+const postedDate = getDateFromId(w.id);
 const days=getElapsedDays(postedDate,date); // 経過日数を計算
-const m=getMultiplier(days); 
+const m=getMultiplier(days);
 
 totalScore += count * (1 * m);
 totalLikesCount += count;
@@ -428,9 +414,13 @@ c: count // count -> c
 }
 
 if (recordedWorkCount > 0) {
-showNotification(`本日分のいいねを記録しました（${recordedWorkCount}作品 / 合計いいね回数:${totalLikesCount}回 / スコア:${totalScore.toFixed(1)}）。保存するには「JSONをコピー」し、date.jsonに貼り付けてください。`, 'success');
-// 入力欄をリセット
-loadLikeInputs(); 
+// 1. 記録成功の通知
+showNotification(`本日分のいいねを記録しました。`,'success');
+// 2. JSONをコピー
+copyJSON();
+// 3. 入力欄をリセット
+loadLikeInputs();
+// 4. ギャラリーを再描画
 renderGallery();
 } else {
 showNotification('記録対象のデータがありませんでした。作品を選択し、いいね数を入力してください。', 'error');
@@ -449,30 +439,47 @@ analysisSection.innerHTML = '<p>作品データがありません。</p>';
 return;
 }
 
-// --- タグ分析の計算 ---
-const tagScores = {};
+// --- 作品ごとの総スコアを計算 ---
+const workScores = {};
 appData.illustrations.forEach(w => {
-const postedDate = getDateFromId(w.id); 
-// スコアの再計算 (l, c を使用し、e は動的に計算)
+const postedDate = getDateFromId(w.id);
 const totalScore = (w.l || []).reduce((s, h) => {
-    const days = getElapsedDays(postedDate, h.d); // 記録日 (h.d) と投稿日 (postedDate) からeを計算
-    return s + (h.c * getMultiplier(days));
+  const days = getElapsedDays(postedDate, h.d);
+  return s + (h.c * getMultiplier(days));
 }, 0);
+workScores[w.id] = totalScore;
+});
 
+
+// --- タグ分析の計算 (均等割を適用) ---
+const tagTotalScores = {}; // タグごとの合計スコア
+const tagWorkCounts = {}; // タグが付いている作品の数
+
+appData.illustrations.forEach(w => {
 (w.tags || []).forEach(tag => {
-tagScores[tag] = (tagScores[tag] || 0) + totalScore;
+  // タグごとの合計スコアに、その作品の総スコアを加算
+tagTotalScores[tag] = (tagTotalScores[tag] || 0) + workScores[w.id];
+  // タグが付いている作品の数をカウント
+tagWorkCounts[tag] = (tagWorkCounts[tag] || 0) + 1;
 });
 });
 
-const sortedTags = Object.entries(tagScores)
+// 均等割を適用して最終的なタグスコアを計算
+const tagFinalScores = {};
+Object.keys(tagTotalScores).forEach(tag => {
+  // スコアを、そのタグが付いている作品の数で割る
+tagFinalScores[tag] = tagTotalScores[tag] / tagWorkCounts[tag];
+});
+
+const sortedTags = Object.entries(tagFinalScores)
 .sort(([, scoreA], [, scoreB]) => scoreB - scoreA);
 
 // --- 分析結果の表示 ---
-let analysisHTML = '<h3>タグ別評価スコアランキング</h3>';
+let analysisHTML = '';
 if (sortedTags.length > 0) {
 analysisHTML += '<ul>';
 sortedTags.forEach(([tag, score]) => {
-analysisHTML += `<li>${tag}: <b>${score.toFixed(1)}</b></li>`;
+analysisHTML += `<li>${tag}: <b>${score.toFixed(2)}</b></li>`; // 小数点第2位まで表示
 });
 analysisHTML += '</ul>';
 } else {
@@ -485,21 +492,19 @@ const works = [...appData.illustrations].sort((a,b) => new Date(getDateFromId(b.
 
 works.forEach((w, i) => {
 const history = w.l || []; // l を使用
-const postedDate = getDateFromId(w.id); 
+const postedDate = getDateFromId(w.id);
 
 // 総いいね数と総スコアの計算
 const totalLikes = history.reduce((s, h) => s + h.c, 0); // c を使用
-const totalScore = history.reduce((s, h) => {
-    const days = getElapsedDays(postedDate, h.d); // 記録日 (h.d) と投稿日 (postedDate) からeを計算
-    return s + (h.c * getMultiplier(days));
-}, 0); 
+// workScoresから取得
+const totalScore = workScores[w.id];
 
 // 最後にいいねされた日付を特定 (d を使用)
-const lastLikedDate = history.length > 0 
+const lastLikedDate = history.length > 0
 ? history.map(h => h.d)
-.sort() 
-.pop() 
-: '—'; 
+.sort()
+.pop()
+: '—';
 
 const tagDisplay = (w.tags || []).join(', ') || '—';
 
@@ -507,7 +512,7 @@ const card = document.createElement('div');
 card.className = 'work-card';
 card.innerHTML = `
 <div class="thumbnail-container">
-<div class="thumbnail-image" 
+<div class="thumbnail-image"
 style="background-image: url('${w.s_u}');">
 </div>
 <div class="link-overlay">
@@ -546,7 +551,7 @@ return { d: history.d, c: history.c };
 }
 
 // 過去のlikes_historyが残っている場合は削除
-delete cleanItem.likes_history; 
+delete cleanItem.likes_history;
 return cleanItem;
 });
 
@@ -562,7 +567,10 @@ ${illustrationsString}
 
 // Clipboard APIを使用してコピー
 navigator.clipboard.writeText(jsonText)
-.then(() => showNotification('JSONをコピーしました！ date.jsonに上書き保存してください。', 'success'))
+.then(() => {
+  // JSONコピー成功時の通知は recordAllLikes() に移動したため、ここでは行わない
+  console.log('JSONをコピーしました。');
+})
 .catch(() => showNotification('コピーに失敗しました', 'error'));
 }
 </script>
