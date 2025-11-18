@@ -111,6 +111,80 @@ height: 24px;
 
 
 #likeInputContainer { border: 1px dashed #ccc; padding: 15px; margin-top: 10px; background-color: #fcfcfc; }
+
+/* ★ いいね入力一覧のスタイル */
+.like-item {
+display: flex;
+align-items: center;
+padding: 5px 0;
+border-bottom: 1px dotted #eee;
+justify-content: space-between;
+}
+.like-item:last-child {
+border-bottom: none;
+}
+.like-thumbnail {
+width: 60px;
+height: 60px;
+background-size: cover;
+background-position: center center;
+margin-right: 10px;
+flex-shrink: 0;
+}
+.like-info {
+flex-grow: 1;
+font-size: 0.9em;
+color: #555;
+line-height: 1.2;
+/* ★ 追加: いいね数表示と横並びにするためにflexを使用 */
+display: flex;
+flex-direction: column;
+}
+.like-info-top {
+    display: flex;
+    align-items: center;
+    margin-bottom: 2px;
+}
+.like-current-count {
+    font-size: 0.85em;
+    font-weight: bold;
+    color: #dc3545; /* いいね数を赤で強調 */
+    margin-left: 10px;
+    padding: 2px 5px;
+    border-radius: 3px;
+    background-color: #ffe0e3;
+}
+
+.like-info span {
+font-weight: bold;
+color: #333;
+}
+.like-controls {
+display: flex;
+align-items: center;
+flex-shrink: 0;
+margin-right: 80%;
+}
+.like-controls button {
+width: 30px;
+height: 30px;
+padding: 0;
+line-height: 1;
+font-size: 1.2em;
+margin: 0 5px;
+background-color: #6c757d;
+}
+.like-controls button:hover {
+background-color: #495057;
+}
+.like-count {
+width: 40px;
+text-align: center;
+font-weight: bold;
+font-size: 1.1em;
+}
+/* ★ スタイル終わり */
+
 input, select, textarea { padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
 button { padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; background-color: #007bff; color: white; transition: background-color 0.3s; }
 button:hover { background-color: #0056b3; }
@@ -156,6 +230,8 @@ background-color: #28a745; /* 緑色で成功を強調 */
 
 <div id="notificationContainer"></div>
 
+<h1>イラスト活動ログダッシュボード</h1>
+
 <div class="form-section">
 <h2>✏️ 活動の記録</h2>
 <p>記録日: <span id="currentDate"></span></p>
@@ -183,19 +259,20 @@ background-color: #28a745; /* 緑色で成功を強調 */
 
 <div id="likeForm" style="display:none; margin-top:15px;">
 <p><strong>[過去作いいね記録]</strong></p>
-<div id="likeInputContainer"></div>
-<button onclick="addLikeInput()">＋いいね記録を追加</button>
-<button onclick="recordAllLikes()" style="margin-left: 10px;">本日分のいいねを記録</button>
+<div id="likeInputContainer">
+    </div>
+<button onclick="recordAllLikes()" style="margin-top: 10px;">本日分のいいねを記録</button>
 </div>
 </div>
+
 
 <div class="gallery-section">
 <h2>🖼️ ギャラリー</h2>
 <div class="gallery-grid" id="galleryContainer">
-<p id="loadingStatus">読み込み中...</p>
+<p id="loadingStatus">date.jsonを読み込んでいます...</p>
 </div>
-<p></p>
-<h2>🏷️ タグランキング</h2>
+
+<h2>📊 分析結果</h2>
 <div class="analysis-section" id="analysisSection">
 <p>作品データが読み込まれていません。</p>
 </div>
@@ -258,14 +335,18 @@ c: h.count
 }));
 delete item.likes_history;
 }
-  // 互換性のため、古いデータにeが存在する場合は削除（データファイルとして保持しないため）
-  if(item.l){
-    item.l = item.l.map(h => {
-      const { e, ...rest } = h; // eを削除
-      return rest;
-    });
-  }
+ // 互換性のため、古いデータにeが存在する場合は削除（データファイルとして保持しないため）
+ if(item.l){
+  item.l = item.l.map(h => {
+   const { e, ...rest } = h; // eを削除
+   return rest;
+  });
+ }
 
+// 過去の形式で s_u がない場合は x_u を使用する
+if (!item.s_u && item.x_u) {
+item.s_u = item.x_u;
+}
 return item;
 }
 
@@ -280,7 +361,9 @@ document.getElementById('currentDate').textContent = getFormattedDate();
 await loadDateJSON();
 });
 
-//　date.jsonを外部からfetchで読み込む処理
+/**
+* date.jsonを外部からfetchで読み込む処理
+*/
 async function loadDateJSON(){
 try {
 const res = await fetch('date.json');
@@ -297,10 +380,10 @@ throw new Error('JSONファイル形式が不正です。');
 appData.illustrations = rawData.map(item => normalizeWorkData(item));
 
 renderGallery();
-document.getElementById('loadingStatus').textContent = `データを読み込みました。`;
+document.getElementById('loadingStatus').textContent = `date.json (${appData.illustrations.length}件の作品) を読み込みました。`;
 } catch (err) {
-console.error("読み込みエラー:", err);
-document.getElementById('loadingStatus').textContent = 'データを読み込めませんでした。';
+console.error("JSON読み込みエラー:", err);
+document.getElementById('loadingStatus').textContent = 'date.jsonを読み込めませんでした。空のデータで開始します。';
 
 appData.illustrations = [];
 renderGallery();
@@ -313,22 +396,72 @@ document.getElementById('likeForm').style.display = v==='like'?'block':'none';
 if(v==='like') loadLikeInputs();
 }
 
+/**
+ * いいね入力フォームを、全作品のリスト形式で描画する
+ */
 function loadLikeInputs(){
-const c=document.getElementById('likeInputContainer'); c.innerHTML='';
-if(appData.illustrations.length===0){ c.innerHTML='<p style="color:red;">作品がありません。</p>'; return; }
-addLikeInput();
+    const c=document.getElementById('likeInputContainer');
+    c.innerHTML='';
+
+    if(appData.illustrations.length===0){
+        c.innerHTML='<p style="color:red;">作品がありません。新規投稿を記録してください。</p>';
+        return;
+    }
+    
+    // --- 累積いいね数を計算 (この関数内で再利用するため) ---
+    const workLikes = {};
+    appData.illustrations.forEach(w => {
+        workLikes[w.id] = (w.l || []).reduce((s, h) => s + h.c, 0);
+    });
+    // ---
+
+    // 最新投稿順にソートして表示
+    const sortedWorks = [...appData.illustrations].sort((a,b) => new Date(getDateFromId(b.id)) - new Date(getDateFromId(a.id)));
+
+    sortedWorks.forEach(w => {
+        const postedDate = getDateFromId(w.id);
+        const tagsDisplay = (w.tags || []).join(', ');
+        const currentLikes = workLikes[w.id]; // 累積いいね数を取得
+
+        const div = document.createElement('div');
+        div.className = 'like-item';
+        div.setAttribute('data-work-id', w.id);
+        div.innerHTML = `
+            <div class="like-thumbnail" style="background-image: url('${w.s_u}');"></div>
+            <div class="like-info">
+                <div class="like-info-top">
+                    <span>${w.id}</span>
+                    <span class="like-current-count">♥${currentLikes}</span>
+                </div>
+                ${tagsDisplay}
+            </div>
+            <div class="like-controls">
+                <button onclick="changeLikeCount('${w.id}', -1)">－</button>
+                <span id="count_${w.id}" class="like-count" data-count="0">0</span>
+                <button onclick="changeLikeCount('${w.id}', 1)">＋</button>
+            </div>
+        `;
+        c.appendChild(div);
+    });
 }
 
-function addLikeInput(){
-const c=document.getElementById('likeInputContainer');
-const i=c.children.length;
-// 投稿日はIDから取得して表示
-const options=appData.illustrations.map(w=>`<option value="${w.id}">${w.id} (${getDateFromId(w.id)})</option>`).join('');
-const div=document.createElement('div');
-div.innerHTML=`<select id="likeWork_${i}"><option value="">作品を選択</option>${options}</select>
-<input type="number" id="likeCount_${i}" min="1" value="1" style="width:70px;">
-<button onclick="this.parentElement.remove()">－</button>`;
-c.appendChild(div);
+/**
+ * いいね数を増減させるヘルパー関数
+ * @param {string} workId - 作品ID
+ * @param {number} delta - 増減値 (+1 または -1)
+ */
+function changeLikeCount(workId, delta) {
+    const countElement = document.getElementById(`count_${workId}`);
+    if (!countElement) return;
+
+    let currentCount = parseInt(countElement.getAttribute('data-count'));
+    let newCount = currentCount + delta;
+
+    // 0未満にはしない
+    if (newCount < 0) newCount = 0;
+
+    countElement.setAttribute('data-count', newCount);
+    countElement.textContent = newCount;
 }
 
 function recordNewPost(){
@@ -338,7 +471,7 @@ const s=document.getElementById('postThumbnailUrl').value.trim(); // サムネ�
 const tagsInput = document.getElementById('postTags').value.trim();
 
 if(!p||!x||!s){
-showNotification('Pixiv,X,サムネイルのURLを全てに入力してください', 'error');
+showNotification('Pixiv URL, X URL, サムネイル用X URLの全てを入力してください', 'error');
 return;
 }
 
@@ -346,7 +479,7 @@ const dateStr = getFormattedDate().replace(/-/g, ''); // YYYYMMDD
 let id = dateStr;
 
 if(appData.illustrations.find(i=>i.id===id)){
-showNotification('エラー: 本日（' + id + '）は既に作品が登録されています。', 'error');
+showNotification('エラー: 本日（' + id + '）は既に作品が登録されています。同一日には複数作品を登録できません。', 'error');
 return;
 }
 
@@ -364,7 +497,7 @@ l: [] // 履歴 (likes_history -> l) を初期化
 };
 
 appData.illustrations.push(newPost);
-showNotification('新規投稿を記録しました。ID: ' + id, 'success');
+showNotification('新規投稿を記録しました。保存するには「本日分のいいねを記録」後に自動コピーされるJSONをdate.jsonに貼り付けてください。ID: ' + id, 'success');
 
 document.getElementById('postPixivUrl').value = '';
 document.getElementById('postXUrl').value = '';
@@ -374,57 +507,60 @@ renderGallery();
 }
 
 function recordAllLikes(){
-const rows=document.getElementById('likeInputContainer').children;
-const date=getFormattedDate();
-let totalScore=0;
-let totalLikesCount = 0;
-let recordedWorkCount = 0;
+    // 変更: 入力要素を動的に生成したリストから取得
+    const likeItems = document.querySelectorAll('#likeInputContainer .like-item');
+    const date=getFormattedDate();
+    let totalScore=0;
+    let totalLikesCount = 0;
+    let recordedWorkCount = 0;
 
-for(let r of rows){
-const id=r.querySelector('select').value;
-const count=parseInt(r.querySelector('input').value);
-if(!id||!count||count<=0)continue;
+    for(let item of likeItems){
+        const id = item.getAttribute('data-work-id');
+        const countElement = item.querySelector('.like-count');
+        const count = parseInt(countElement.getAttribute('data-count'));
 
-const w=appData.illustrations.find(i=>i.id===id);
-if(!w)continue;
+        if(count <= 0) continue; // いいね数が0以下の場合はスキップ
 
-const postedDate = getDateFromId(w.id);
-const days=getElapsedDays(postedDate,date); // 経過日数を計算
-const m=getMultiplier(days);
+        const w=appData.illustrations.find(i=>i.id===id);
+        if(!w)continue;
 
-totalScore += count * (1 * m);
-totalLikesCount += count;
-recordedWorkCount++;
+        const postedDate = getDateFromId(w.id);
+        const days=getElapsedDays(postedDate,date); // 経過日数を計算
+        const m=getMultiplier(days);
 
-if(!w.l) w.l = []; // 新しいキー 'l' を使用
+        totalScore += count * (1 * m);
+        totalLikesCount += count;
+        recordedWorkCount++;
 
-// 既存の同日記録を探す
-const existingEntryIndex = w.l.findIndex(entry => entry.d === date); // 'liked_date' -> 'd'
+        if(!w.l) w.l = []; // 新しいキー 'l' を使用
 
-if (existingEntryIndex !== -1) {
-// 既存のエントリがあれば、countを加算
-w.l[existingEntryIndex].c += count; // 'count' -> 'c'
-} else {
-// 新しいエントリを追加: e (経過日数) は保存しない
-w.l.push({
-d: date, // liked_date -> d
-c: count // count -> c
-});
-}
-}
+        // 既存の同日記録を探す
+        const existingEntryIndex = w.l.findIndex(entry => entry.d === date); // 'liked_date' -> 'd'
 
-if (recordedWorkCount > 0) {
-// 1. 記録成功の通知
-showNotification(`本日分のいいねを記録しました。`,'success');
-// 2. JSONをコピー
-copyJSON();
-// 3. 入力欄をリセット
-loadLikeInputs();
-// 4. ギャラリーを再描画
-renderGallery();
-} else {
-showNotification('記録対象のデータがありませんでした。作品を選択し、いいね数を入力してください。', 'error');
-}
+        if (existingEntryIndex !== -1) {
+            // 既存のエントリがあれば、countを加算
+            w.l[existingEntryIndex].c += count; // 'count' -> 'c'
+        } else {
+            // 新しいエントリを追加: e (経過日数) は保存しない
+            w.l.push({
+                d: date, // liked_date -> d
+                c: count // count -> c
+            });
+        }
+    }
+
+    if (recordedWorkCount > 0) {
+        // 1. 記録成功の通知
+        showNotification(`本日分のいいねを記録しました（${recordedWorkCount}作品 / 合計いいね回数:${totalLikesCount}回 / スコア:${totalScore.toFixed(1)}）。JSONがクリップボードにコピーされました。`, 'success');
+        // 2. JSONをコピー
+        copyJSON();
+        // 3. 入力欄をリセット（カウントを0に戻す）
+        loadLikeInputs();
+        // 4. ギャラリーを再描画
+        renderGallery();
+    } else {
+        showNotification('記録対象のデータがありませんでした。いいね数を1以上にしてから記録してください。', 'error');
+    }
 }
 
 function renderGallery(){
@@ -439,15 +575,17 @@ analysisSection.innerHTML = '<p>作品データがありません。</p>';
 return;
 }
 
-// --- 作品ごとの総スコアを計算 ---
+// --- 作品ごとの総スコアと総いいね数を計算 ---
 const workScores = {};
+const workLikes = {};
 appData.illustrations.forEach(w => {
-const postedDate = getDateFromId(w.id);
-const totalScore = (w.l || []).reduce((s, h) => {
-  const days = getElapsedDays(postedDate, h.d);
-  return s + (h.c * getMultiplier(days));
-}, 0);
-workScores[w.id] = totalScore;
+    const postedDate = getDateFromId(w.id);
+    const totalScore = (w.l || []).reduce((s, h) => {
+     const days = getElapsedDays(postedDate, h.d);
+     return s + (h.c * getMultiplier(days));
+    }, 0);
+    workScores[w.id] = totalScore;
+    workLikes[w.id] = (w.l || []).reduce((s, h) => s + h.c, 0); // 総いいね数を計算
 });
 
 
@@ -457,9 +595,9 @@ const tagWorkCounts = {}; // タグが付いている作品の数
 
 appData.illustrations.forEach(w => {
 (w.tags || []).forEach(tag => {
-  // タグごとの合計スコアに、その作品の総スコアを加算
+ // タグごとの合計スコアに、その作品の総スコアを加算
 tagTotalScores[tag] = (tagTotalScores[tag] || 0) + workScores[w.id];
-  // タグが付いている作品の数をカウント
+ // タグが付いている作品の数をカウント
 tagWorkCounts[tag] = (tagWorkCounts[tag] || 0) + 1;
 });
 });
@@ -467,7 +605,7 @@ tagWorkCounts[tag] = (tagWorkCounts[tag] || 0) + 1;
 // 均等割を適用して最終的なタグスコアを計算
 const tagFinalScores = {};
 Object.keys(tagTotalScores).forEach(tag => {
-  // スコアを、そのタグが付いている作品の数で割る
+ // スコアを、そのタグが付いている作品の数で割る
 tagFinalScores[tag] = tagTotalScores[tag] / tagWorkCounts[tag];
 });
 
@@ -475,7 +613,7 @@ const sortedTags = Object.entries(tagFinalScores)
 .sort(([, scoreA], [, scoreB]) => scoreB - scoreA);
 
 // --- 分析結果の表示 ---
-let analysisHTML = '';
+let analysisHTML = '<h3>タグ別評価スコアランキング (均等割適用)</h3>';
 if (sortedTags.length > 0) {
 analysisHTML += '<ul>';
 sortedTags.forEach(([tag, score]) => {
@@ -495,7 +633,7 @@ const history = w.l || []; // l を使用
 const postedDate = getDateFromId(w.id);
 
 // 総いいね数と総スコアの計算
-const totalLikes = history.reduce((s, h) => s + h.c, 0); // c を使用
+const totalLikes = workLikes[w.id]; // workLikesから取得
 // workScoresから取得
 const totalScore = workScores[w.id];
 
@@ -568,8 +706,8 @@ ${illustrationsString}
 // Clipboard APIを使用してコピー
 navigator.clipboard.writeText(jsonText)
 .then(() => {
-  // JSONコピー成功時の通知は recordAllLikes() に移動したため、ここでは行わない
-  console.log('JSONをコピーしました。');
+ // JSONコピー成功時の通知は recordAllLikes() に移動したため、ここでは行わない
+ console.log('JSONをコピーしました。');
 })
 .catch(() => showNotification('コピーに失敗しました', 'error'));
 }
