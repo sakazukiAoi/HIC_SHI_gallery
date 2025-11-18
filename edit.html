@@ -136,7 +136,6 @@ flex-grow: 1;
 font-size: 0.9em;
 color: #555;
 line-height: 1.2;
-/* ★ 追加: いいね数表示と横並びにするためにflexを使用 */
 display: flex;
 flex-direction: column;
 }
@@ -148,7 +147,7 @@ flex-direction: column;
 .like-current-count {
     font-size: 0.85em;
     font-weight: bold;
-    color: #dc3545; /* いいね数を赤で強調 */
+    color: #dc3545; 
     margin-left: 10px;
     padding: 2px 5px;
     border-radius: 3px;
@@ -287,7 +286,7 @@ let appData = { illustrations: [] };
 const ICON_P = "https://play-lh.googleusercontent.com/Ls9opXo6-wfEWmbBU8heJaFS8HwWydssWE1J3vexIGvkF-UJDqcW7ZMD8w6dQABfygONd4z3Yt4TfRDZAPYq=w240-h480-rw";
 const ICON_X = "https://play-lh.googleusercontent.com/XyI6Hyz9AFg7E_joVzX2zh6CpWm9B2DG2JuEz5meCFVm4-wTKTnHgqbmg62iFKe4Gzca=w240-h480-rw";
 
-// --- カスタム通知関数 ---
+// --- カスタム通知 ---
 function showNotification(message, type = 'success') {
 const container = document.getElementById('notificationContainer');
 if (!container) return;
@@ -664,7 +663,7 @@ style="background-image: url('${w.s_u}');">
 </div>
 <p>投稿日: ${postedDate}</p>
 <p>タグ: ${tagDisplay}</p>
-<p>♥数: <b>${totalLikes}</b></p>
+<p>♥: <b>${totalLikes}</b></p>
 <p>前回: <b>${lastLikedDate}</b></p>
 <p>スコア: <b>${totalScore.toFixed(1)}</b></p>
 `;
