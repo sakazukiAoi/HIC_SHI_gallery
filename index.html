@@ -1,39 +1,327 @@
 <!DOCTYPE html>
 <html lang="ja">
-<head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/ fb# website: http://ogp.me/ns/ website#">
-    <title>HIC_SHI</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1.0">
-    <link rel="icon" href="https://hic-shi.github.io/HOME/HIC_SHI_ICON.png">
-    <link rel="stylesheet" type="text/css" href="style.css">
-    <meta property="og:url" content="https://sakazukiaoi.github.io/HIC_SHI/" />
-    <meta property="og:type" content="website" />  
-    <meta property="og:title" content="HIC_SHI" /> 
-    <meta property="og:image" content="OGP_min.png" />
-    <meta name="description" content="ええ">
-    <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="おお">
-    <meta name="twitter:description" content="ウェブサイト">
-    <meta name="twitter:image" content="OGP_min.png">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>イラストギャラリー</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 <style>
-    #headerHOME {
-        color: #0d2613;
-        background-color: rgb(196, 210, 196);
+body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+h1 { display: none;}
+h2 { border-bottom: 2px solid #ccc; padding-bottom: 5px; margin-top: 0; }
+.gallery-section { margin-bottom: 40px; padding: 20px; border: 1px solid #eee; background-color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+.material-symbols-outlined {
+    font-variation-settings:
+        'FILL' 0,
+        'wght' 400,
+        'GRAD' 0,
+        'opsz' 24;
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: "liga";
+    -webkit-font-smoothing: antialiased;
+}
+#galleryHeader {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+#galleryHeader h2 {
+    margin: 0;
+    margin-right: 15px;
+    border-bottom: none;
+    padding-bottom: 0;
+}
+#sortButtons {
+    display: flex;
+    gap: 10px;
+}
+#sortButtons button {
+    background-color: #6c757d;
+    color: white; 
+    border: none; 
+    border-radius: 4px; 
+    cursor: pointer; 
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 10px;
+    font-size: 0.9em;
+    height: 35px;
+}
+#sortButtons button:hover {
+    background-color: #5a6268;
+}
+
+#sortButtons button span + * {
+    display: none; 
+}
+
+
+.gallery-grid {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+gap: 0;
+}
+
+@media (max-width: 600px) {
+    .gallery-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-    header button {
-    color: #888888;
-    }
+}
+
+.work-card {
+border: 1px solid #ddd;
+padding: 0;
+background-color: #fff;
+box-shadow: 0 0 5px rgba(0,0,0,0.1);
+position: relative;
+width: 100%;
+}
+
+.thumbnail-container { 
+    width: 100%; 
+    position: relative; 
+    overflow: hidden; 
+    margin-bottom: 0; 
+    display: block; 
+}
+
+.thumbnail-image { 
+    position: absolute; 
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%; 
+    display: block; 
+    background-size: cover; 
+    background-position: center center;
+    background-repeat: no-repeat;
+}
+
+.thumbnail-container::after {
+    content: "";
+    display: block;
+    padding-top: 100%; 
+}
+
+.link-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: space-between; align-items: center; padding: 0 0px; background-color: rgba(0, 0, 0, 0.4); opacity: 0; transition: opacity 0.3s ease; z-index: 10; pointer-events: none; }
+.work-card:hover .link-overlay { opacity: 1; pointer-events: auto; }
+.overlay-button_p, .overlay-button_x { background: rgba(255, 255, 255, 0.9); border: none; border-radius: 50%; width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; cursor: pointer; text-decoration: none; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); }
+.overlay-button_p { margin-left: 25px; }
+.overlay-button_x { margin-right: 27px; }
+.overlay-button_p img, .overlay-button_x img { width: 24px; height: 24px; }
 </style>
 </head>
 <body>
-    <header>
-<a href="index.html"><button id="headerHOME">HOME</button></a>
-<a href="about.html"><button id="headerAbout" >About</button></a>
-<a href="links.html"><button id="headerLinks">Links</button></a>
-<a href="gallery.html"><button id="headerGalley">Gallery</button></a>
-    </header>
-    <main>
-<h1>Hello Welcome</h1>
-    </main>
+
+<div id="notificationContainer"></div>
+
+<div class="gallery-section">
+
+<div id="galleryHeader">
+ <h2><a href="https://hic-shi.github.io/HOME/gallery.html">戻る</a></h2>
+ <div id="sortButtons">
+  <button onclick="sortGallery('date')">
+   <span class="material-symbols-outlined">calendar_month</span>
+  </button>
+  <button onclick="sortGallery('score')">
+   <span class="material-symbols-outlined">refresh</span>
+  </button>
+ </div>
+</div>
+
+<div class="gallery-grid" id="galleryContainer">
+<p id="loadingStatus">読み込んでいます...</p>
+</div>
+</div>
+
+
+<script>
+// JSON構造: { id: "20251109", p_u: "...", x_u: "...", s_u: "...", tags: [], l: [{d, c}] }
+let appData = { illustrations: [] };
+let worksWithScore = [];
+
+const ICON_P = "https://play-lh.googleusercontent.com/Ls9opXo6-wfEWmbBU8heJaFS8HwWydssWE1J3vexIGvkF-UJDqcW7ZMD8w6dQABfygONd4z3Yt4TfRDZAPYq=w240-h480-rw";
+const ICON_X = "https://play-lh.googleusercontent.com/XyI6Hyz9AFg7E_joVzX2zh6CpWm9B2DG2JuEz5meCFVm4-wTKTnHgqbmg62iFKe4Gzca=w240-h480-rw";
+
+const loadingStatusElement = document.getElementById('loadingStatus');
+const EXTERNAL_JSON_URL = 'https://hic-shi.github.io/HOME/date.json'; // 外部JSONのURLを定数化
+
+function getDateFromId(id) {
+if (id && id.match(/^\d{8}$/)) {
+const datePart = id.substring(0, 8);
+return `${datePart.substring(0, 4)}-${datePart.substring(4, 6)}-${datePart.substring(6, 8)}`;
+}
+if (id && id.match(/^\d{10}$/)) {
+const datePart = id.substring(0, 8);
+return `${datePart.substring(0, 4)}-${datePart.substring(4, 6)}-${datePart.substring(6, 8)}`;
+}
+return getFormattedDate();
+}
+
+function normalizeWorkData(item) {
+if (item.likes_history) {
+item.l = item.likes_history.map(h => ({ d: h.liked_date, c: h.count }));
+delete item.likes_history;
+}
+  if (item.l) {
+    item.l = item.l.map(h => {
+      const { e, ...rest } = h;
+      return rest;
+    });
+  }
+
+if (!item.s_u && item.x_u) {
+item.s_u = item.x_u;
+}
+return item;
+}
+
+function getFormattedDate(d = new Date()) { return d.toISOString().split('T')[0]; }
+function getElapsedDays(d1, d2) { return Math.max(0, Math.ceil((new Date(d2) - new Date(d1)) / (1000 * 60 * 60 * 24))); }
+function getMultiplier(days) { if (days >= 365) return 4; if (days >= 181) return 3; if (days >= 91) return 2; if (days >= 31) return 1.5; return 1; }
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadDateJSON();
+});
+
+async function loadDateJSON() {
+    const statusElement = loadingStatusElement;
+    if (!statusElement) return; 
+
+    try {
+        statusElement.textContent = `JSONファイルを読み込み中: ${EXTERNAL_JSON_URL}`;
+
+        // 外部JSONのURLにキャッシュを回避するクエリパラメータを追加
+        const fetchUrl = EXTERNAL_JSON_URL + '?_t=' + Date.now(); 
+
+        const res = await fetch(fetchUrl);
+        
+        if (!res.ok) {
+             // HTTPエラーを詳細に通知
+            throw new Error(`HTTPエラー: ${res.status} (${res.statusText})`);
+        }
+        
+        let rawData = await res.json();
+        
+        // 🚨 デバッグ用: 読み込んだデータの内容を確認
+        console.log("外部から読み込んだJSONデータ:", rawData); 
+
+        if (rawData && rawData.illustrations && Array.isArray(rawData.illustrations)) {
+            rawData = rawData.illustrations;
+        } else if (!Array.isArray(rawData)) {
+             // 形式が不正な場合のエラー
+            throw new Error('JSONファイルの形式が不正です。最上位要素が配列またはillustrationsプロパティを持つオブジェクトではありません。');
+        }
+
+        appData.illustrations = rawData.map(item => normalizeWorkData(item));
+        statusElement.textContent = '読み込み完了'; // 成功時の表示
+
+        calculateWorkScores();
+        sortGallery('score', true);
+
+
+    } catch (err) {
+        console.error(`JSON読み込みエラー (${EXTERNAL_JSON_URL}):`, err);
+        statusElement.textContent = `読み込み失敗: ${err.message}`;
+
+        appData.illustrations = [];
+        worksWithScore = [];
+        renderGallery();
+    }
+}
+
+
+function calculateWorkScores() {
+    worksWithScore = appData.illustrations.map(w => {
+        const postedDate = getDateFromId(w.id);
+        
+        const totalScore = (w.l || []).reduce((s, h) => {
+            const days = getElapsedDays(postedDate, h.d);
+            return s + (h.c * getMultiplier(days));
+        }, 0);
+
+        const totalLikes = (w.l || []).reduce((s, h) => s + h.c, 0);
+        const lastLikedDate = (w.l || []).length > 0
+            ? (w.l || []).map(h => h.d).sort().pop()
+            : '—';
+
+        return {
+            ...w,
+            totalScore: totalScore,
+            totalLikes: totalLikes,
+            lastLikedDate: lastLikedDate
+        };
+    });
+}
+
+function sortGallery(sortBy, silent = false) {
+    if (worksWithScore.length === 0) {
+        renderGallery();
+        return;
+    }
+
+    let sortedWorks = [...worksWithScore];
+
+    if (sortBy === 'date') {
+        sortedWorks.sort((a, b) => new Date(getDateFromId(b.id)) - new Date(getDateFromId(a.id)));
+    } else {
+        sortedWorks.sort((a, b) => b.totalScore - a.totalScore);
+    }
+
+    renderGallery(sortedWorks);
+}
+
+function renderGallery(works = []) {
+    const c = document.getElementById('galleryContainer');
+    c.innerHTML = '';
+
+    if (works.length === 0) {
+        c.innerHTML = '<p>作品がありません。</p>';
+        return;
+    }
+
+    // 読み込みステータス要素を非表示にする
+    loadingStatusElement.style.display = 'none';
+
+    works.forEach((w) => {
+        const postedDate = getDateFromId(w.id);
+
+        const cardTitle = `投稿日: ${postedDate}\nタグ: ${(w.tags || []).join(', ')}`;
+
+        const card = document.createElement('div');
+        card.className = 'work-card';
+        card.title = cardTitle;
+
+        card.innerHTML = `
+        <div class="thumbnail-container">
+        <div class="thumbnail-image"
+        style="background-image: url('${w.s_u}');">
+        </div>
+        <div class="link-overlay">
+        <a href="${w.p_u}" target="_blank" class="overlay-button_p">
+        <img src="${ICON_P}" alt="Pixiv">
+        </a>
+        <a href="${w.x_u}" target="_blank" class="overlay-button_x">
+        <img src="${ICON_X}" alt="X">
+        </a>
+        </div>
+        </div>
+        `;
+        c.appendChild(card);
+    });
+}
+</script>
 </body>
 </html>
