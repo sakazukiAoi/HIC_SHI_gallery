@@ -130,7 +130,7 @@ width: 100%;
 <div class="gallery-section">
 
 <div id="galleryHeader">
- <h2>🖼️Gallery</h2>
+ <h2><a href="https://hic-shi.github.io/HOME/gallery.html">戻る</a></h2>
  <div id="sortButtons">
   <button onclick="sortGallery('date')">
    <span class="material-symbols-outlined">calendar_month</span>
@@ -280,7 +280,7 @@ function renderGallery(works = []) {
     works.forEach((w) => {
         const postedDate = getDateFromId(w.id);
 
-        const cardTitle = `投稿日: ${postedDate}\nタグ: ${(w.tags || []).join(', ')}\n♥: ${w.totalLikes}`;
+        const cardTitle = `投稿日: ${postedDate}\nタグ: ${(w.tags || []).join(', ')}`;
 
         const card = document.createElement('div');
         card.className = 'work-card';
